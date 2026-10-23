@@ -26,7 +26,7 @@ sky = SubResource("Sky_s85wv")
 [node name="Environment" unique_id=1851466389 instance=ExtResource("1_ub5pq")]
 script = ExtResource("2_4pqxy")
 
-[node name="Plane" parent="." index="0" unique_id=1986233116]
+[node name="Plane" parent="." index="0" unique_id=1109388659]
 surface_material_override/0 = SubResource("StandardMaterial3D_if5ix")
 surface_material_override/1 = SubResource("StandardMaterial3D_jylvv")
 
@@ -101,17 +101,17 @@ shadow_enabled = true
 transform = Transform3D(0.843892, 0.3418059, 0.41353986, -0.4809249, 0.14026213, 0.86546975, 0.23781863, -0.9292444, 0.28274903, 10.544916, 12.833935, 0)
 light_energy = 0.5
 
-[node name="DirectionalLight3D3" type="DirectionalLight3D" parent="." index="7" unique_id=159789974]
-transform = Transform3D(-1, 0, -8.742278e-08, -2.3327196e-08, 0.96374303, 0.26683202, 8.4253095e-08, 0.26683202, -0.96374303, -3.8784409, 8.169632, -19.913763)
-light_energy = 0.5
-
-[node name="Settings menu" parent="." index="8" unique_id=2045956854 instance=ExtResource("6_nxrbl")]
+[node name="Settings menu" parent="." index="7" unique_id=2045956854 instance=ExtResource("6_nxrbl")]
 visible = false
 
-[node name="anti_cheat" type="Node" parent="." index="9" unique_id=1496734272]
+[node name="anti_cheat" type="Node" parent="." index="8" unique_id=1496734272]
 script = ExtResource("7_4pqxy")
 
-[node name="Throw_portal_gun" parent="." index="10" unique_id=1488973322 instance=ExtResource("8_3vyp2")]
+[node name="DirectionalLight3D3" type="DirectionalLight3D" parent="anti_cheat" index="0" unique_id=159789974]
+transform = Transform3D(-1, 1.7763568e-15, -8.742278e-08, -2.3327196e-08, 0.96374303, 0.26683202, 8.4253095e-08, 0.26683202, -0.96374303, -3.8784409, 8.169632, -19.913763)
+light_energy = 0.5
+
+[node name="Throw_portal_gun" parent="." index="9" unique_id=1488973322 instance=ExtResource("8_3vyp2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.747273, -35.016136)
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/MarginContainer/VBoxContainer/SinglePlayer" to="." method="_on_single_player_pressed"]
