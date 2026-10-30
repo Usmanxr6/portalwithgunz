@@ -25,6 +25,7 @@ config/icon="uid://557yev33xedo"
 Global="*uid://c1xxttxh8shp6"
 Network="*uid://r8j6sp7df6v"
 AI_Director="*uid://bi0pamcrbsvyv"
+GameManager="*uid://brcst32v7p067"
 
 [display]
 
@@ -59,6 +60,7 @@ Bullet=""
 Enemy=""
 Object=""
 Card=""
+network_interactables=""
 
 [input]
 
@@ -213,5 +215,6 @@ LevelUp={
 [rendering]
 
 renderer/rendering_method.mobile="forward_plus"
+textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/tighter_shadow_caster_culling=false
 occlusion_culling/use_occlusion_culling=true

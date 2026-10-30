@@ -10,21 +10,48 @@ extends RigidBody3D
 @onready var grenade_top = %MeshInstance3D2
 @onready var grenade_tab = %MeshInstance3D3
 
-# Called when the node enters the scene tree for the fssirst time.
+var shooter: Node = null
+var has_exploded := false
+var spawn_timer := 0.15 # Brief buffer so it clears the player's hand/spawn point safely
+
 func _ready() -> void:
-	$Timer.timeout.connect(_on_timer_timeout)
-	print("grenade _ready scale:", scale)
+	# Enable contact monitoring so RigidBody3D can detect collisions
+	contact_monitor = true
+	max_contacts_reported = 4
+	
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
+		
+	if has_node("Timer"):
+		$Timer.timeout.connect(_on_timer_timeout)
 
+func _physics_process(delta: float) -> void:
+	if spawn_timer > 0:
+		spawn_timer -= delta
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
-
-func _on_timer_timeout() -> void:
+# Triggered immediately when the grenade collides with anything in the world
+func _on_body_entered(body: Node3D) -> void:
+	# connect to up-to-date damage according to singleton reference
+	explosion_damage = Global.grenade_damage
+	print('global dmg grenade: ' + str(explosion_damage))
+	if has_exploded or spawn_timer > 0:
+		return
+		
+	# Explode on contact with environment, enemies, or targets
 	explode()
 
+func _on_timer_timeout() -> void:
+	# Backup safety timer in case it doesn't hit anything
+	explode()
+
+func set_shooter(player: Node) -> void:
+	shooter = player
+
 func explode() -> void:
+	if has_exploded:
+		return
+	has_exploded = true
+	
 	freeze = true
 	if grenade_body:
 		grenade_body.visible = false
@@ -32,20 +59,25 @@ func explode() -> void:
 		grenade_tab.visible = false
 	if grenade_top:
 		grenade_top.visible = false
-	$CollisionShape3D.disabled = true
-	$CollisionShape3D2.disabled = true
-	$CollisionShape3D3.disabled = true
-	var overlapping_bodies = explosion_area.get_overlapping_bodies()
-	for body in overlapping_bodies:
-		if body.is_in_group('target'):
-				# If the enemy has a receive_damage function, call it via RPC (passing damage amount, e.g., 25)
+		
+	# Safely disable collision shapes
+	for node in [$CollisionShape3D, get_node_or_null("CollisionShape3D2"), get_node_or_null("CollisionShape3D3")]:
+		if node and node is CollisionShape3D:
+			node.disabled = true
+	
+	if explosion_area:
+		var overlapping_bodies = explosion_area.get_overlapping_bodies()
+		for body in overlapping_bodies:
+			if body.is_in_group('Enemy') or body.is_in_group('target'):
 				if body.has_method("receive_damage"):
-					body.receive_damage.rpc(25)
-		if body is RigidBody3D:
-			var force_dir = (body.global_position - global_position).normalized()
-			body.apply_central_impulse(force_dir * explosion_power)
-	debris.emitting = true
-	smoke.emitting = true
-	fire.emitting = true
+					body.receive_damage.rpc(explosion_damage, shooter)
+			if body is RigidBody3D and body != self:
+				var force_dir = (body.global_position - global_position).normalized()
+				body.apply_central_impulse(force_dir * explosion_power)
+				
+	if debris: debris.emitting = true
+	if smoke: smoke.emitting = true
+	if fire: fire.emitting = true
+	
 	await get_tree().create_timer(2.0).timeout
 	queue_free()

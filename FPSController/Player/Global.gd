@@ -1,5 +1,7 @@
 extends Node
  
+var current_generator: Node = null
+
 # middleman Global.gd acts as a way to connect data flow of enemy death needed for xp
 # given that enemy does not exist inside of Player's scene tree.
 signal experience_up(amount)
@@ -8,18 +10,22 @@ signal signal_message()
 ## GROUP: Weapon Checks for Upgrade System
 var shotugn_unlocked = false
 var grenade_unlocked = false
+var shotgun_damage = 15
+var grenade_damage = 50
 
 ## Weapon Cooldown (Grenade)
 var weapon_cooldown: float = 0.0
 var grenade_cooldown_bonus: float = 0
 var grenade_size_bonus: float = 0
+var doubled_explosion_chance = false
 
 ## DEV NOTE: apply this as a condition for jump when releasing public version
-var jump_unlocked = true
+var jump_unlocked = false
 
 ## Upgrade card misc
-var xp_threshold_card = false
-var upgrade_pending = false
+var xp_threshold_card = 0
+var upgrade_pending = 0.0
+var selecting = false
 
 var current_score = 0
 var health = 100
@@ -29,8 +35,8 @@ var players := {}
 var player
 var currentWeapon = 'Pistol'
 
-func signal_popup():
-	signal_message.emit()
+func signal_popup(bool):
+	signal_message.emit(bool)
 # if status is true, increases the size of the window and scales on-screen elements to window size
 # allows for better viewing on retina (or similar resolution) displays
 func high_resolution_display_mode(status):

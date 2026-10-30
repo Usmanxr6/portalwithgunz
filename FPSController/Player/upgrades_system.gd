@@ -4,19 +4,19 @@ extends Node
 @onready var UI: Control = %HUD
 @onready var camera = %Camera3D
 @onready var message = get_node("res://assets/models/gunIcons/popup.tscn")
+@onready var weaponsManager = %weaponsManager
+@onready var player = $"../.."
 
 # rarity values are as follows: 1 for common, 2 for rare, 3 for legendary (if we do those).
 @export var card_pool: Array[Dictionary] = [
 	{ "name": "speed_up", "scene": preload("res://assets/models/upgradeCards/commom/speed_up_card.tscn"), "rarity": 1, "unique": false },
 	{ "name": "health_up", "scene": preload("res://assets/models/upgradeCards/commom/health_up_card.tscn"), "rarity": 1, "unique": false },
-	{ "name": "damage_up", "scene": preload("res://assets/models/upgradeCards/commom/damage_up_card.tscn"), "rarity": 1, "unique": false },
 	{ "name": "unlock_jump", "scene": preload("res://assets/models/upgradeCards/rare/unlock_jump_card.tscn"), "rarity": 2, "unique": true },
-	{ "name": "unlock_grenade_launcher", "scene": preload("res://assets/models/upgradeCards/rare/unlock_grenade_launcher.tscn"), "rarity": 2, "unique": true },
-	{ "name": "unlock_shotugn", "scene": preload("res://assets/models/upgradeCards/rare/unlock_shotgun.tscn"), "rarity": 2, "unique": true },
-	{ "name": "xp_threshold", "scene": preload("res://assets/models/upgradeCards/rare/xp_threshold_card.tscn"), "rarity": 2, "unique": true },
+	{ "name": "xp_threshold", "scene": preload("res://assets/models/upgradeCards/rare/xp_threshold_card.tscn"), "rarity": 2, "unique": false },
 	{ "name": "large_health_up", "scene": preload("res://assets/models/upgradeCards/rare/large_health_up_card.tscn"), "rarity": 2, "unique": false },
 	{ "name": "large_speed_up", "scene": preload("res://assets/models/upgradeCards/rare/large_speed_up_card.tscn"), "rarity": 2, "unique": false },
-	{ "name": "large_damage_up", "scene": preload("res://assets/models/upgradeCards/rare/large_damage_up_card.tscn"), "rarity": 2, "unique": false}
+	{ "name": "unlock_grapple", "scene": preload("res://assets/models/upgradeCards/rare/unlock_grapple.tscn"), "rarity": 2, "unique": true},
+	{ "name": "global_damage", "scene": preload("res://assets/models/upgradeCards/commom/global_damage.tscn"), "rarity": 1, "unique": false}
 ]
 
 var failsafe = 0
@@ -25,6 +25,7 @@ var modified_cards
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	xpBar.level_up.connect(_add_options)
+	weaponsManager.weapon_name.connect(allocate_cards)
 	modified_cards = card_pool.duplicate(true)
 	# this should ensure random output is different every run
 	randomize()
@@ -35,6 +36,8 @@ func _process(delta: float) -> void:
 	pass
 
 func _add_options(input):
+	# lock movement while upgrades are being chosen
+	player.can_look = false
 	# intended logic: use the upgradesNode to 'paste' 3 random options out of the cards available onto 
 	# each player's screens locally, every roll seperate.
 	#print('found signal and func ran: ' + str(input))
@@ -45,9 +48,9 @@ func _add_options(input):
 	modified_cards = card_pool.duplicate(true)
 	
 	for index in options:
-		# this will be used for weighting: 0-7 means a common spawns whilst 8-10 means rare
+		# this will be used for weighting: 0-6 means a common spawns whilst 7-10 means rare
 		var rarity_rng = randi_range(0, 10)
-		if rarity_rng == 0:
+		if rarity_rng <= 4:
 			card_object = validate_index(1)
 			spawned_card = card_object["scene"].instantiate()
 		else:
@@ -68,10 +71,9 @@ func _add_options(input):
 
 		spawned_card.position = Vector2(pos, 300)
 		UI.add_child(spawned_card)
-		Global.signal_popup()
-		Global.upgrade_pending = false
 		#print("card: " + str(spawned_card))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	update_ui()
 
 func validate_index(rarity):
 	failsafe += 1
@@ -111,9 +113,9 @@ func unlock_shotgun():
 func unlock_grenade_launcher():
 	card_pool.append({
 		"name": "grenade_radius",
-		"scene": preload("res://assets/models/upgradeCards/rare/grenade_radius_card.tscn"),
-		"rarity": 2,
-		"unique": true
+		"scene": preload("res://assets/models/upgradeCards/commom/grenade_radius_card.tscn"),
+		"rarity": 1,
+		"unique": false
 	})
 	card_pool.append({
 		"name": "grenade_damage",
@@ -121,6 +123,13 @@ func unlock_grenade_launcher():
 		"rarity": 2,
 		"unique": true
 	})
+	card_pool.append({
+		"name": "grenade_explosion_chance",
+		"scene": preload("res://assets/models/upgradeCards/rare/grenade_explosion_chance.tscn"),
+		"rarity": 2,
+		"unique": true
+	})
+	
 	
 func unlock_jump():
 	card_pool.append({
@@ -135,11 +144,47 @@ func unlock_jump():
 		"rarity": 2,
 		"unique": true
 	})
+	
+func unlock_pistol():
+	card_pool.append({
+		"name": "pistol_damage_chance", 
+		"scene": preload("res://assets/models/upgradeCards/commom/pistol_damage_chance.tscn"), 
+		"rarity": 1, 
+		"unique": false
+	})
+	card_pool.append({ 
+		"name": "pistol_damage_up", 
+		"scene": preload("res://assets/models/upgradeCards/commom/pistol_damage_up_card.tscn"),
+		"rarity": 1, 
+		"unique": false 
+	})
+	card_pool.append({ 
+		"name": "large_pistol_damage_up", 
+		"scene": preload("res://assets/models/upgradeCards/rare/large_pistol_damage_up_card.tscn"), 
+		"rarity": 2, 
+		"unique": false
+	})
 
 func clear_unique(cardname: String):
 	# fancy line which finds index where name = parameter
 	var index = card_pool.find_custom(func(card): return card["name"] == cardname)
 	card_pool.remove_at(index)
+	
+func update_ui():
+	if Global.upgrade_pending <= 0:
+			Global.signal_popup(false)
+			
+func allocate_cards(weaponname):
+	if weaponname == 'Shotgun':
+		unlock_shotgun()
+	elif weaponname == 'Pistol':
+		pass
+	elif weaponname == 'Grenade':
+		unlock_grenade_launcher()
+	else:
+		print('card assignment error- weapon unrecognised by upgrades system')
+	
+	
 	
 	
 	

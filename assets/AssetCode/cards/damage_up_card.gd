@@ -20,12 +20,17 @@ func _on_button_pressed() -> void:
 func apply_effect(player) -> void:
 	# declared here to avoid variable bloat in player
 	var pistol_base = 25
-	# EFFECT: +10% of pistol base damage added onto current damage.
+	# EFFECT: +15% of pistol base damage added onto current damage.
 	var current_pistol_damage = player.pistol_damage
-	player.pistol_damage = current_pistol_damage + (pistol_base / 10)
+	player.pistol_damage = current_pistol_damage + (pistol_base * 0.15)
 	print("PISTOL: " + str(player.pistol_damage))
 	# hide mouse for gameplay
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	# this should delete all instances of cards currently on screen, if that isn't happening
 	# then ensure all cards belong to group 'Card' in the inspector.
+	player.can_look = true
+	Global.upgrade_pending -= 1
+	if Global.upgrade_pending <= 0:
+		Global.signal_popup(false)
 	get_tree().call_group("Card", "queue_free")
+	
